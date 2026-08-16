@@ -195,19 +195,6 @@ This example follows the manuscript's demonstration experiment, which started fr
 5. In **Step 3 — Export Settings**, select **GLB ZIP** to generate editable animations or **Video ZIP** to generate `.webm` previews. For video, set the frame rate, resolution, scene appearance, repeat count, and one or more camera angles.
 6. Click **Generate GLB ZIP** or **Generate Video ZIP** and wait for the ZIP file to download.
 
-To reconstruct the demonstration stimulus continua, run one single-row generation job for each body part so that non-target parts remain unchanged. Select all constituent torso bones for **spine** and both left and right counterparts for each bilateral limb category, following the bone names shown by the imported Xsens file. Use a step of `0.1` and the following inclusive MP Amplitude Scale ranges:
-
-| Target body part | Scale range | Number of levels |
-| --- | ---: | ---: |
-| Spine | 0–3 | 31 |
-| Head | 0–7 | 71 |
-| Upper arm | 0–4 | 41 |
-| Lower arm | 0–4 | 41 |
-| Upper leg | 0–3 | 31 |
-| Lower leg | 0–2 | 21 |
-
-Because `1` is the unchanged standard rather than a manipulated stimulus, excluding it from each of the six continua gives 230 manipulated animations in total; retain one separate scale-`1` export when a common standard animation is also required.
-
 > **Image placeholder 19**
 >
 > *Figure 19. **Batch Generation — File Check** for the Xsens standard walking animation, showing its detected bone list.*
