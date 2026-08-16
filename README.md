@@ -134,6 +134,92 @@ The **Animation File (.glb)** option is intended for an imported Skeletal Animat
 >
 > *Figure 12. PLD export workflow, showing PLD CSV export and a Pane A WEBM video export.*
 
+## Tutorial 5: Batch Workflow — Batch Preprocessing
+
+Use **Batch Preprocessing** when you want to inspect, trim, and export several skeletal animations without reopening the import window for every file.
+
+1. Click **Enter MotionMIX**, then click **Batch Workflow** at the bottom of the input-type window.
+2. Click **Add Folder** to add all supported animations in one folder, or **Add Files** to select individual files. The batch workflow accepts `.fbx`, `.glb`, and `.gltf` files. You can add more files in several rounds; duplicate files with the same name and size are added only once.
+3. Check the **File Queue**. Click `×` beside one file to remove it, or **Clear All** to restart the queue.
+4. Click **Batch Preprocessing**. The first animation is loaded into the preview automatically.
+5. If the browser supports folder access, click **Select Output Directory** and choose where the exported files should be stored. Otherwise, each file is downloaded through the browser.
+6. Use the playback controls to inspect the current animation. Drag **Start** and **End** to keep only the required time interval; leave both controls at their original limits to export the complete animation.
+7. Edit **Export Filename** if needed, then click **Export** to save the current animation or **Export & Next** to save it and load the next file. Export each trim before switching files because unexported trim positions are reset when a file is loaded again.
+8. Use **Prev** and **Next** to switch between animations. Click **View Log** to check which files have been exported or trimmed. When finished, click **Back to File List**.
+
+Batch Preprocessing exports each result as an animated `.glb` file.
+
+> **Image placeholder 13**
+>
+> *Figure 13. **Batch Workflow** window with **Add Folder**, **Add Files**, the populated **File Queue**, and the three batch operations.*
+
+> **Image placeholder 14**
+>
+> *Figure 14. **Batch Preprocessing** workspace showing the animation preview, file navigation, Start/End trim controls, output directory, export filename, and export buttons.*
+
+> **Image placeholder 15**
+>
+> *Figure 15. **Batch Processing Log** showing exported, unexported, trimmed, and untrimmed files.*
+
+## Tutorial 6: Batch Workflow — Batch Statistics
+
+This example follows the manuscript's validation workflow for the action category **walk**. The source sequences were selected from [AMASS](https://amass.is.tue.mpg.de/) using [BABEL](https://babel.is.tue.mpg.de/) action labels. AMASS and BABEL data are not supplied with MotionMIX: obtain them from their official sites, accept their licenses, and convert the selected sequences to `.fbx`, `.glb`, or `.gltf` before import.
+
+1. Open **Batch Workflow**, then use **Add Folder** or **Add Files** to add the converted walk animations.
+2. Check that the files use the same skeleton and bone names. For the manuscript example, the selected units were `L_Hip`, `L_Knee`, `R_Hip`, `R_Knee`, `Spine1`, `Spine2`, `Spine3`, `Neck`, `Head`, `L_Shoulder`, `L_Elbow`, `R_Shoulder`, and `R_Elbow`.
+3. Click **Batch Statistics**. Wait while MotionMIX reads the bone list, then use **All**, **None**, and the bone checkboxes to keep only the units required for the analysis.
+4. Select the output fields. To reproduce the PCA-decomposition export used for the walk validation, select **(1.2) Explained Variance Ratio (Main Motion Variance, M)**, **(1.3) Explained Variance Ratio (Secondary Motion Variance, S)**, and **(1.4) M/S**. Other available fields cover average bone length, the mean bone vector, MP Angle summaries, and V3 summaries.
+5. Enter a **CSV filename**, click **Run Analysis**, and wait for all files to finish. The result contains one row per analyzed file and selected bone, beginning with `File No.`, `Filename`, and `Bone`.
+6. Click **Download CSV** to save the completed table. The downloaded statistics are bone-level results; any body-part grouping, left–right averaging, or across-performer summary required by a study is performed in the subsequent analysis code.
+
+> **Image placeholder 16**
+>
+> *Figure 16. AMASS walk files added to the Batch Workflow queue after conversion to a supported skeletal-animation format.*
+
+> **Image placeholder 17**
+>
+> *Figure 17. **Batch Statistics** with the walk-analysis bones and the M, S, and M/S PCA statistics selected.*
+
+> **Image placeholder 18**
+>
+> *Figure 18. Completed Batch Statistics analysis with **Download CSV** enabled, together with the first rows of the exported walk CSV file.*
+
+## Tutorial 7: Batch Workflow — Batch Generation
+
+This example follows the manuscript's demonstration experiment, which started from one standard walking sequence obtained from the [free Xsens motion-capture animation assets](https://www.xsens.com/entertainment/free-xsens-motion-capture-animation-assets). Use the lawfully obtained Xsens FBX file, or a converted GLB copy, as the source animation.
+
+1. Open **Batch Workflow**, add the Xsens walking animation, and click **Batch Generation**.
+2. Wait for **Step 1 — File Check**. Expand the file entry if you want to inspect its bones, then click **Continue**. When generating from several files together, use files with the same skeleton and bone names so that every parameter row addresses the intended units.
+3. In **Step 2 — Generation Parameters**, click **Select bones**, select all bone units belonging to one target body part, choose **Main Plane Amplitude Scale**, and enter the required scale values as a comma-separated list such as `0, 0.1, 0.2`. One parameter value is applied to every bone selected in that row.
+4. Click **Add Parameter Row** when several parameters should vary in the same generation job. **Cartesian Product** generates every combination across rows; **Synchronized Levels** pairs the first value in every row, then the second value in every row, and therefore requires equal-length value lists.
+5. In **Step 3 — Export Settings**, select **GLB ZIP** to generate editable animations or **Video ZIP** to generate `.webm` previews. For video, set the frame rate, resolution, scene appearance, repeat count, and one or more camera angles.
+6. Click **Generate GLB ZIP** or **Generate Video ZIP** and wait for the ZIP file to download.
+
+To reconstruct the demonstration stimulus continua, run one single-row generation job for each body part so that non-target parts remain unchanged. Select all constituent torso bones for **spine** and both left and right counterparts for each bilateral limb category, following the bone names shown by the imported Xsens file. Use a step of `0.1` and the following inclusive MP Amplitude Scale ranges:
+
+| Target body part | Scale range | Number of levels |
+| --- | ---: | ---: |
+| Spine | 0–3 | 31 |
+| Head | 0–7 | 71 |
+| Upper arm | 0–4 | 41 |
+| Lower arm | 0–4 | 41 |
+| Upper leg | 0–3 | 31 |
+| Lower leg | 0–2 | 21 |
+
+Because `1` is the unchanged standard rather than a manipulated stimulus, excluding it from each of the six continua gives 230 manipulated animations in total; retain one separate scale-`1` export when a common standard animation is also required.
+
+> **Image placeholder 19**
+>
+> *Figure 19. **Batch Generation — File Check** for the Xsens standard walking animation, showing its detected bone list.*
+
+> **Image placeholder 20**
+>
+> *Figure 20. One demonstration-style parameter row with the target body-part bones selected, **Main Plane Amplitude Scale** selected, and the comma-separated scale levels entered.*
+
+> **Image placeholder 21**
+>
+> *Figure 21. **Combination Mode** and **Export Settings**, showing both GLB ZIP and Video ZIP output choices.*
+
 ## Resetting a change
 
 Click **Initialize** in an individual card to restore that item to its original settings. In General Manipulation, **Initialize** resets the currently selected items.
@@ -148,3 +234,15 @@ npx parcel src/index.html
 ```
 
 Open the local address displayed in the terminal, then click **Enter MotionMIX**.
+
+## Third-party data, assets, and licenses
+
+Yes—public research software should identify the source and license of every third-party dataset, animation, character, texture, image, video, and software dependency. A project license does not replace the original terms attached to third-party material.
+
+- **Adobe Mixamo.** Sample files and textures whose names contain `Mixamo` originate from [Adobe Mixamo](https://www.mixamo.com/). Adobe's [Mixamo FAQ](https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html) permits royalty-free use of its characters and animations in personal, commercial, and non-profit projects, but that FAQ does not explicitly grant permission to redistribute the unmodified source FBX files as an asset collection. These assets are not covered by the MotionMIX code license. Before publishing the repository, confirm raw-file redistribution rights with Adobe or remove the raw Mixamo assets and let each user download them directly.
+- **AMASS and BABEL.** These datasets are used as research examples and are not distributed as part of MotionMIX. Their official licenses restrict copying and redistribution; users must register, obtain their own copies, follow the [AMASS license](https://amass.is.tue.mpg.de/license.html) and [BABEL license](https://babel.is.tue.mpg.de/license.html), and cite the corresponding publications.
+- **Xsens motion assets.** The demonstration source is credited to the [Xsens free motion-capture animation assets](https://www.xsens.com/entertainment/free-xsens-motion-capture-animation-assets). Xsens-derived FBX files and converted copies are not covered by the MotionMIX code license and remain subject to the terms presented by Xsens when the assets are downloaded. Confirm redistribution permission before including a source or converted animation in a public repository.
+- **Unreal Engine and MetaHuman.** MetaHuman characters, Unreal mannequin assets, and media rendered from them remain subject to Epic's [MetaHuman licensing terms](https://www.metahuman.com/license?lang=en-US) and the applicable Unreal Engine terms. Raw character or mannequin assets are not relicensed by MotionMIX; confirm that any files included in the repository may be redistributed, and otherwise publish only permitted rendered outputs.
+- **Open-source software dependencies.** MotionMIX uses `three`, `dat.gui`, `fft-js`, `jszip`, `ml-pca`, `buffer`, `process`, `parcel`, and `gh-pages`. Their versions are recorded in `package-lock.json`, and each package remains under its own license. Preserve the dependency license notices when distributing a built copy of MotionMIX.
+
+Before a public release, also record the author, source, and license of `PLDTestData.csv` and every remaining image, video, FBX, GLB, and texture under `src/assets`. The current repository does not contain enough provenance information to verify those items automatically; material without documented ownership or redistribution permission should be replaced, removed, or accompanied by a separate written permission. A dedicated `THIRD_PARTY_NOTICES.md` file is recommended if this inventory becomes too long for the README.
