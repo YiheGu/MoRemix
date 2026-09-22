@@ -1,0 +1,11 @@
+.parcel-cache/
+dist/
+dist_temp/
+node_modules/
+package-lock.json
+package.json
+SkeletonAnimEditor/
+
+# Motion assets may be subject to third-party redistribution restrictions.
+*.[fF][bB][xX]
+*.[gG][lL][bB]
