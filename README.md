@@ -71,7 +71,9 @@ In this example, **V3 Mean Addition** changes the average elevation of each sele
 The same manipulation workflow can be applied across different actions and skeletal models. The following examples are based on motion-capture data and skeletal models from the [AMASS](https://amass.is.tue.mpg.de/) database.
 
 > https://github.com/user-attachments/assets/86470386-9313-4461-9e4c-67b9a708ee61
+
 > https://github.com/user-attachments/assets/c3a76b35-62e1-4cbe-bd71-973825951c75
+
 > https://github.com/user-attachments/assets/b9617e06-21c6-4f4d-97e0-8364640c9fda
 
 ## Tutorial 3: Edit a Point Light Display
