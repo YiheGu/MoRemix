@@ -26,7 +26,7 @@ This tutorial uses the Mixamo **Walking** animation.
 3. To use your downloaded file, click the blue dashed import area and select the file, or drag the file into that area.
 4. Click **Confirm** and wait for the workspace to load.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/6b46db0d-c868-455e-ab64-37fc20425bb8)
+> https://github.com/user-attachments/assets/6b46db0d-c868-455e-ab64-37fc20425bb8
 
 ### Option B — Point Light Display (PLD)
 
@@ -38,7 +38,7 @@ The PLD tutorial uses the sample CSV file already included in MoRemix.
 2. The import window automatically fills in `PLDTestData.csv`. Click **Download sample data** if you want to save a copy locally; downloading is optional because the same file is already selected.
 3. Click **Confirm**.
 4. The **PLD Parent Binding** window describes how the points are connected. The sample file already has the correct parent IDs, so leave them unchanged and click **Confirm**.
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/b209114a-f55a-4dbc-857b-8c61d6aee989)
+> https://github.com/user-attachments/assets/b209114a-f55a-4dbc-857b-8c61d6aee989
 
 For another PLD file, use a CSV table with the columns `name,frame,x,y,z`. Each row gives the position of one point in one animation frame.
 
@@ -56,7 +56,7 @@ In this example, **V3 Mean Addition** changes the average elevation of each sele
 3. Click `mixamorig4RightArm` and set **Mean Addition (V3/BoneLen)** to `-0.3`.
 4. Click **Generate** in either updated parameter card.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/181e0d26-a8c0-49c5-ae59-701b3c742c4a)
+> https://github.com/user-attachments/assets/181e0d26-a8c0-49c5-ae59-701b3c742c4a
 
 ### Change the left and right upper arms together
 
@@ -66,7 +66,7 @@ In this example, **V3 Mean Addition** changes the average elevation of each sele
 4. Set **Amplitude Scale** to `2` in the General Manipulation card.
 5. Click **Generate**. The same value is now applied to both selected upper arms.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/6b31fef1-4d08-4d9d-86f3-495abdf6fa24)
+> https://github.com/user-attachments/assets/6b31fef1-4d08-4d9d-86f3-495abdf6fa24
 
 ## Tutorial 3: Edit a Point Light Display
 
@@ -78,7 +78,7 @@ PLD editing follows the same logic, but each editable unit is a point together w
 2. Set **Amplitude Scale** to `2`.
 3. Click **Generate** and preview the result.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/a471e5ed-1ee6-47fa-b1f9-c863bd3b599f)
+> https://github.com/user-attachments/assets/a471e5ed-1ee6-47fa-b1f9-c863bd3b599f
 
 ### Change both upper arms together
 
@@ -88,13 +88,13 @@ Editing multiple PLD segments together follows the same General Manipulation wor
 
 Click **Export Settings**, select an output type, adjust any settings that appear, and click **Export**.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/c87b2e63-7ec8-4fd1-a0c6-ecf9f95fb6e4)
+> https://github.com/user-attachments/assets/c87b2e63-7ec8-4fd1-a0c6-ecf9f95fb6e4
 
 - **Animation File (.glb):** exports the edited skeletal animation for use in compatible 3D software.
 - **PLD File (.csv):** exports the edited PLD data or converts the edited skeletal animation into point-position data and exports it as CSV.
 - **Video (.webm):** records a preview. Choose **Pane A** for the skeletal view, **Pane B** for the corresponding PLD view, or **Pane A + Pane B** for both. Each selected camera angle produces a video.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/a2d4ded5-8948-424f-a429-840d5895e918)
+> https://github.com/user-attachments/assets/a2d4ded5-8948-424f-a429-840d5895e918
 
 ## Tutorial 5: Batch Workflow — Batch Preprocessing
 
@@ -111,7 +111,7 @@ This example imports 10 walking animations and uses **Batch Preprocessing** to i
 
 Batch Preprocessing exports each result as an animated `.glb` file.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/fc198567-f31c-4bf8-ac42-a47c982eb328)
+> https://github.com/user-attachments/assets/fc198567-f31c-4bf8-ac42-a47c982eb328
 
 
 ## Tutorial 6: Batch Workflow — Batch Statistics
@@ -125,7 +125,7 @@ This example analyzes the shoulder bones in 10 walking animations and reports th
 5. Enter a **CSV filename**, click **Run Analysis**, and wait for all files to finish. The result contains one row per analyzed file and selected bone, beginning with `File No.`, `Filename`, and `Bone`.
 6. Click **Download CSV** to save the completed table. The downloaded statistics are bone-level results; any body-part grouping, left–right averaging, or across-performer summary required by a study is performed in the subsequent analysis code.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/e494b119-c2f3-441f-9c9e-5c82dcc86e4c)
+> https://github.com/user-attachments/assets/e494b119-c2f3-441f-9c9e-5c82dcc86e4c
 
 ## Tutorial 7: Batch Workflow — Batch Generation
 
@@ -138,7 +138,7 @@ This example uses one waving animation from the [AMASS](https://amass.is.tue.mpg
 5. In **Step 3 — Export Settings**, select **GLB ZIP** to generate editable animations or **Video ZIP** to generate `.webm` previews. For video, set the frame rate, resolution, scene appearance, repeat count, and one or more camera angles.
 6. Click **Generate GLB ZIP** or **Generate Video ZIP** and wait for the ZIP file to download.
 
-> ![MoRemix introduction page](https://github.com/user-attachments/assets/8c015258-623f-4f8a-b7ae-7a4b712379df)
+> https://github.com/user-attachments/assets/8c015258-623f-4f8a-b7ae-7a4b712379df
 
 ## Resetting a change
 
