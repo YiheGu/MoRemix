@@ -2,7 +2,7 @@ import { applyModalPrimaryButtonStyle, setModalPrimaryButtonDisabled } from "./M
 
 const importModalBg = new URL("../../../assets/Background.png", import.meta.url);
 const skeletonImage = new URL("../../../assets/SkeletonFormat.png", import.meta.url);
-const pldImage = new URL("../../../assets/pldFormat.png", import.meta.url);
+const pldImage = new URL("../../../assets/PldFormat.png", import.meta.url);
 
 export function createFileFormatSelectModal({ onConfirm, onBatch }) {
   const overlay = document.createElement("div");
