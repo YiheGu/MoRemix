@@ -1,10 +1,8 @@
 import { applyModalPrimaryButtonStyle, setModalPrimaryButtonDisabled } from './ModalPrimaryButtonStyle.js';
 
 const importModalBg = new URL("../../../assets/Background.png", import.meta.url);
-const defaultSkeletonFileUrl = new URL("../../../assets/MixamoWalking.fbx", import.meta.url);
 const defaultPldFileUrl = new URL("../../../assets/PLDTestData.csv", import.meta.url);
 const defaultFileByType = {
-    skeleton: { url: defaultSkeletonFileUrl, name: "MixamoWalking.fbx" },
     pld: { url: defaultPldFileUrl, name: "PLDTestData.csv" },
 };
 const defaultFileReadableCache = new Map();
