@@ -5,6 +5,10 @@ import { deepClone } from '../sceneSubjects/functions/deepClone';
 import { showWorkspaceLoadingOverlay } from '../sceneSubjects/gui/WorkspaceLoadingOverlay';
 import { recordAnimationMultipleAngles } from '../sceneSubjects/functions/videoRecorder';
 import { applyCameraAngle } from '../controlFlow/cameraAngleUtils';
+import {
+    MOTION_REFERENCE_MODE,
+    normalizeMotionReferenceMode,
+} from '../sceneSubjects/functions/motionReference';
 
 const PARAM_OPTIONS = [
     { id: 'MPAmp.ampScale', label: 'Main Plane Amplitude Scale' },
@@ -20,6 +24,8 @@ const PARAM_OPTIONS = [
     { id: 'FrequencyHz', label: 'Frequency (Hz)' },
 ];
 
+const MAX_RANGE_VALUES = 10000;
+
 function ws(el, css) { el.style.cssText += css; }
 
 function button(text, accent = false) {
@@ -33,9 +39,9 @@ function button(text, accent = false) {
     return btn;
 }
 
-function defaultParams() {
+function defaultParams(referenceMode = MOTION_REFERENCE_MODE.MEAN) {
     return {
-        referenceMode: "mean",
+        referenceMode: normalizeMotionReferenceMode(referenceMode),
         AmplitudeScale: 1,
         PhaseScale: 0,
         MPAmp: {
@@ -70,11 +76,68 @@ function sameBoneList(a = [], b = []) {
     return a.every((name, index) => name === b[index]);
 }
 
-function parseNumberList(text) {
+function parseNumberEntries(text) {
     return String(text || '')
         .split(/[\s,;]+/)
-        .map((value) => Number(value))
-        .filter((value) => Number.isFinite(value));
+        .filter(Boolean)
+        .map((filenameValue) => ({ value: Number(filenameValue), filenameValue }))
+        .filter(({ value }) => Number.isFinite(value));
+}
+
+function getDecimalPlaces(text) {
+    const normalized = String(text || '').trim().toLowerCase();
+    if (!normalized) return 0;
+    const [coefficient, exponentText] = normalized.split('e');
+    const fractionLength = coefficient.includes('.') ? coefficient.split('.')[1].length : 0;
+    const exponent = Number(exponentText) || 0;
+    return Math.max(0, fractionLength - exponent);
+}
+
+function buildRangeEntries(minText, maxText, stepText) {
+    if (![minText, maxText, stepText].every((text) => String(text).trim() !== '')) {
+        return { values: [], error: 'Enter Min, Max, and Step.' };
+    }
+
+    const min = Number(minText);
+    const max = Number(maxText);
+    const step = Number(stepText);
+    if (![min, max, step].every(Number.isFinite)) {
+        return { values: [], error: 'Min, Max, and Step must be valid numbers.' };
+    }
+    if (min > max) return { values: [], error: 'Min must not exceed Max.' };
+    if (!(step > 0)) return { values: [], error: 'Step must be greater than zero.' };
+
+    const precision = Math.max(
+        getDecimalPlaces(minText),
+        getDecimalPlaces(maxText),
+        getDecimalPlaces(stepText)
+    );
+    if (precision > 12) {
+        return { values: [], error: 'Range values support up to 12 decimal places.' };
+    }
+
+    const scale = 10 ** precision;
+    const minUnits = Math.round(min * scale);
+    const maxUnits = Math.round(max * scale);
+    const stepUnits = Math.round(step * scale);
+    if (![minUnits, maxUnits, stepUnits].every(Number.isSafeInteger) || stepUnits <= 0) {
+        return { values: [], error: 'The range magnitude or precision is too large.' };
+    }
+
+    const regularStepCount = Math.floor((maxUnits - minUnits) / stepUnits);
+    const includesMax = minUnits + regularStepCount * stepUnits === maxUnits;
+    const valueCount = regularStepCount + 1 + (includesMax ? 0 : 1);
+    if (valueCount > MAX_RANGE_VALUES) {
+        return { values: [], error: `The range exceeds ${MAX_RANGE_VALUES} values.` };
+    }
+
+    const values = [];
+    for (let index = 0; index <= regularStepCount; index++) {
+        const value = (minUnits + index * stepUnits) / scale;
+        values.push({ value, filenameValue: String(value) });
+    }
+    if (!includesMax) values.push({ value: maxUnits / scale, filenameValue: String(maxUnits / scale) });
+    return { values, error: '' };
 }
 
 function setParamValue(params, path, value, bone = null) {
@@ -111,8 +174,8 @@ function setParamValue(params, path, value, bone = null) {
 function buildCombinations(rows) {
     return rows.reduce((acc, row) => {
         const next = [];
-        row.values.forEach((value) => {
-            acc.forEach((combo) => next.push([...combo, { row, value }]));
+        row.values.forEach(({ value, filenameValue }) => {
+            acc.forEach((combo) => next.push([...combo, { row, value, filenameValue }]));
         });
         return next;
     }, [[]]);
@@ -122,14 +185,14 @@ function buildSynchronizedCombinations(rows) {
     const levelCount = rows[0]?.values?.length || 0;
     const combinations = [];
     for (let i = 0; i < levelCount; i++) {
-        combinations.push(rows.map((row) => ({ row, value: row.values[i] })));
+        combinations.push(rows.map((row) => ({ row, ...row.values[i] })));
     }
     return combinations;
 }
 
 function comboSuffix(combo) {
     return combo
-        .map(({ row, value }) => `${row.param.replaceAll('.', '-')}_${String(value).replace(/[^a-zA-Z0-9._-]/g, '_')}`)
+        .map(({ row, value, filenameValue }) => `${row.param.replaceAll('.', '-')}_${String(filenameValue ?? value).replace(/[^a-zA-Z0-9._-]/g, '_')}`)
         .join('__');
 }
 
@@ -204,6 +267,7 @@ export function createBatchGenerationUI({ files, onBack }) {
     let activeRows = [];
     let exportMode = 'glb';
     let generationMode = 'cartesian';
+    let referenceMode = MOTION_REFERENCE_MODE.MEAN;
     let angleCounter = 1;
     const videoAngles = [];
 
@@ -333,15 +397,17 @@ export function createBatchGenerationUI({ files, onBack }) {
         activeRows = [];
         exportMode = 'glb';
         generationMode = 'cartesian';
+        referenceMode = MOTION_REFERENCE_MODE.MEAN;
         videoAngles.splice(0, videoAngles.length);
         angleCounter = 1;
         body.appendChild(sectionTitle('Step 2 - Generation Parameters'));
 
         const hint = document.createElement('div');
-        hint.innerText = 'Add rows in the form of bones + parameter + value list.';
+        hint.innerText = 'Add rows in the form of bones + parameter + a value list or inclusive range.';
         ws(hint, 'color: #bcc5df;');
         body.appendChild(hint);
 
+        body.appendChild(createReferenceModePanel());
         body.appendChild(createGenerationModePanel());
 
         const rowsEl = document.createElement('div');
@@ -393,6 +459,43 @@ export function createBatchGenerationUI({ files, onBack }) {
             panel.appendChild(note);
 
             return panel;
+        }
+
+        function createReferenceModePanel() {
+            const panel = document.createElement('div');
+            ws(panel, 'display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(0,0,0,0.18);');
+
+            const title = document.createElement('div');
+            title.innerText = 'Reference Value';
+            ws(title, 'font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.5px;');
+            panel.appendChild(title);
+
+            const row = document.createElement('div');
+            ws(row, 'display: flex; gap: 12px; flex-wrap: wrap;');
+            row.appendChild(createReferenceRadioLabel('Keep StartPoint', MOTION_REFERENCE_MODE.START_POINT));
+            row.appendChild(createReferenceRadioLabel('Keep Start-End', MOTION_REFERENCE_MODE.START_END));
+            row.appendChild(createReferenceRadioLabel('Keep Mean Value', MOTION_REFERENCE_MODE.MEAN));
+            panel.appendChild(row);
+
+            return panel;
+        }
+
+        function createReferenceRadioLabel(labelText, value) {
+            const label = document.createElement('label');
+            ws(label, 'display: flex; align-items: center; gap: 6px; color: #d7e2ff; cursor: pointer;');
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'batch-generation-reference-mode';
+            input.value = value;
+            input.checked = referenceMode === value;
+            input.addEventListener('change', () => {
+                if (input.checked) referenceMode = value;
+            });
+            const text = document.createElement('span');
+            text.innerText = labelText;
+            label.appendChild(input);
+            label.appendChild(text);
+            return label;
         }
 
         function createModeRadioLabel(labelText, value) {
@@ -670,11 +773,17 @@ export function createBatchGenerationUI({ files, onBack }) {
 
     function addParamRow(rowsEl) {
         const availableBones = checkResults[0]?.boneList || [];
-        const row = { bones: [], param: PARAM_OPTIONS[0].id, values: [] };
+        const row = {
+            bones: [],
+            param: PARAM_OPTIONS[0].id,
+            valueMode: 'list',
+            values: [],
+            rangeError: '',
+        };
         activeRows.push(row);
 
         const el = document.createElement('div');
-        ws(el, 'display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) minmax(220px, 1fr) auto; gap: 8px; align-items: start; padding: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(0,0,0,0.18);');
+        ws(el, 'display: grid; grid-template-columns: minmax(200px, 1.1fr) minmax(200px, 1fr) minmax(280px, 1.35fr) auto; gap: 8px; align-items: start; padding: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(0,0,0,0.18);');
 
         const bonePicker = document.createElement('details');
         ws(bonePicker, 'width: 100%; background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.16); border-radius: 6px;');
@@ -720,10 +829,87 @@ export function createBatchGenerationUI({ files, onBack }) {
         });
         paramSelect.addEventListener('change', () => { row.param = paramSelect.value; });
 
+        const valueEditor = document.createElement('div');
+        ws(valueEditor, 'display: flex; flex-direction: column; gap: 6px;');
+
+        const valueModeSelect = document.createElement('select');
+        ws(valueModeSelect, 'width: 100%; padding: 7px 8px; background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.16); border-radius: 6px;');
+        [['list', 'Value List'], ['range', 'Min / Max / Step']].forEach(([value, label]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.innerText = label;
+            valueModeSelect.appendChild(option);
+        });
+
         const valuesInput = document.createElement('input');
         valuesInput.placeholder = 'e.g. 0.5, 1, 1.5';
         ws(valuesInput, 'width: 100%; box-sizing: border-box; padding: 7px 8px; background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.16); border-radius: 6px;');
-        valuesInput.addEventListener('input', () => { row.values = parseNumberList(valuesInput.value); });
+
+        const rangeEditor = document.createElement('div');
+        ws(rangeEditor, 'display: none; grid-template-columns: repeat(3, minmax(70px, 1fr)); gap: 6px;');
+        const minInput = createRangeInput('Min');
+        const maxInput = createRangeInput('Max');
+        const stepInput = createRangeInput('Step');
+        rangeEditor.appendChild(minInput.wrapper);
+        rangeEditor.appendChild(maxInput.wrapper);
+        rangeEditor.appendChild(stepInput.wrapper);
+
+        const rangeNote = document.createElement('div');
+        rangeNote.innerText = 'Min and Max are both included.';
+        ws(rangeNote, 'display: none; color: #9aa4c3; font-size: 11px;');
+        const rangeError = document.createElement('div');
+        ws(rangeError, 'display: none; color: #ff9b9b; font-size: 11px;');
+
+        function createRangeInput(labelText) {
+            const wrapper = document.createElement('label');
+            ws(wrapper, 'display: flex; flex-direction: column; gap: 3px; color: #9aa4c3; font-size: 11px;');
+            const label = document.createElement('span');
+            label.innerText = labelText;
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = 'any';
+            ws(input, 'width: 100%; box-sizing: border-box; padding: 7px 8px; background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.16); border-radius: 6px;');
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            return { wrapper, input };
+        }
+
+        function updateRangeValues() {
+            const result = buildRangeEntries(minInput.input.value, maxInput.input.value, stepInput.input.value);
+            row.values = result.values;
+            row.rangeError = result.error;
+            rangeNote.innerText = result.error
+                ? 'Min and Max are both included.'
+                : `Min and Max are both included (${result.values.length} values).`;
+            rangeError.innerText = result.error;
+            rangeError.style.display = result.error ? 'block' : 'none';
+        }
+
+        valuesInput.addEventListener('input', () => {
+            if (row.valueMode === 'list') row.values = parseNumberEntries(valuesInput.value);
+        });
+        [minInput.input, maxInput.input, stepInput.input].forEach((input) => {
+            input.addEventListener('input', updateRangeValues);
+        });
+        valueModeSelect.addEventListener('change', () => {
+            row.valueMode = valueModeSelect.value;
+            const isRange = row.valueMode === 'range';
+            valuesInput.style.display = isRange ? 'none' : 'block';
+            rangeEditor.style.display = isRange ? 'grid' : 'none';
+            rangeNote.style.display = isRange ? 'block' : 'none';
+            if (isRange) {
+                updateRangeValues();
+            } else {
+                row.rangeError = '';
+                rangeError.style.display = 'none';
+                row.values = parseNumberEntries(valuesInput.value);
+            }
+        });
+        valueEditor.appendChild(valueModeSelect);
+        valueEditor.appendChild(valuesInput);
+        valueEditor.appendChild(rangeEditor);
+        valueEditor.appendChild(rangeNote);
+        valueEditor.appendChild(rangeError);
 
         const remove = button('Remove');
         remove.addEventListener('click', () => {
@@ -733,7 +919,7 @@ export function createBatchGenerationUI({ files, onBack }) {
 
         el.appendChild(bonePicker);
         el.appendChild(paramSelect);
-        el.appendChild(valuesInput);
+        el.appendChild(valueEditor);
         el.appendChild(remove);
         rowsEl.appendChild(el);
     }
@@ -763,7 +949,7 @@ export function createBatchGenerationUI({ files, onBack }) {
             row.bones.forEach((boneName) => {
                 const bone = boneByName.get(boneName);
                 if (!bone) return;
-                if (!paramsByBone[bone.id]) paramsByBone[bone.id] = defaultParams();
+                if (!paramsByBone[bone.id]) paramsByBone[bone.id] = defaultParams(referenceMode);
                 setParamValue(paramsByBone[bone.id], row.param, value, bone);
                 touchedBones.set(bone.id, bone);
             });
@@ -801,6 +987,13 @@ export function createBatchGenerationUI({ files, onBack }) {
     }
 
     async function runGeneration() {
+        const invalidRange = activeRows.find((row) => (
+            row.bones.length > 0 && row.param && row.valueMode === 'range' && row.rangeError
+        ));
+        if (invalidRange) {
+            alert(`Invalid Min / Max / Step range: ${invalidRange.rangeError}`);
+            return;
+        }
         const rows = collectCompleteRows();
         if (rows.length < 1) {
             alert('Please add at least one complete parameter row.');
