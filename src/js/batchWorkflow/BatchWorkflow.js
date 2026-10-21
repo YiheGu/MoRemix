@@ -396,7 +396,7 @@ export function createBatchWorkflow({ sceneManager, onClose, onViewChange }) {
         cursor: pointer; font-size: 14px; font-weight: 500;
         transition: background 0.15s ease;
     `;
-    trimActionBtn.innerHTML = `<div>✂ &nbsp;Batch Preprocessing</div><div style="font-size:11px;color:#b0b0b0;margin-top:4px;">Preview, trim, and export each animation as a GLB file.</div>`;
+    trimActionBtn.innerHTML = `<div>✂ &nbsp;Batch Preprocessing</div><div style="font-size:11px;color:#b0b0b0;margin-top:4px;">Preview, trim, and export each animation as a GLB or FBX file.</div>`;
     setModalPrimaryButtonDisabled(trimActionBtn, true);
     trimActionBtn.addEventListener('mouseenter', () => { if (!trimActionBtn.disabled) trimActionBtn.style.background = 'rgba(67,124,204,0.2)'; });
     trimActionBtn.addEventListener('mouseleave', () => { if (!trimActionBtn.disabled) trimActionBtn.style.background = 'rgba(67,124,204,0.1)'; });
@@ -464,7 +464,7 @@ export function createBatchWorkflow({ sceneManager, onClose, onViewChange }) {
         cursor: pointer; font-size: 14px; font-weight: 500;
         transition: background 0.15s ease;
     `;
-    generationActionBtn.innerHTML = `<div>Batch Generation</div><div style="font-size:11px;color:#b0b0b0;margin-top:4px;">Check bone lists, generate parameter combinations, and export GLBs as a ZIP.</div>`;
+    generationActionBtn.innerHTML = `<div>Batch Generation</div><div style="font-size:11px;color:#b0b0b0;margin-top:4px;">Check bone lists, generate parameter combinations, and export GLB or FBX animations as a ZIP.</div>`;
     setModalPrimaryButtonDisabled(generationActionBtn, true);
     generationActionBtn.addEventListener('mouseenter', () => { if (!generationActionBtn.disabled) generationActionBtn.style.background = 'rgba(94,234,212,0.14)'; });
     generationActionBtn.addEventListener('mouseleave', () => { if (!generationActionBtn.disabled) generationActionBtn.style.background = 'rgba(94,234,212,0.06)'; });

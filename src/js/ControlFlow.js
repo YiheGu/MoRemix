@@ -900,13 +900,8 @@ export function ControlFlow(sceneManager) {
             exportOptionModal = createExportOptionModal({
                 mountTo: paneC,
                 onConfirm: ({ optionId, videoSettings }) => {
-                    if (optionId === "animation") {
-                        // Export as GLB animation file
-                        if (typeof skeletalMotion.exportGLTF === "function") {
-                            skeletalMotion.exportGLTF();
-                        } else {
-                            console.warn("exportGLTF missing on skeletalMotion.");
-                        }
+                    if (optionId === "animation" || optionId === "animationFbx") {
+                        return skeletalMotion.exportAnimation(optionId === "animationFbx" ? "fbx" : "glb");
                     } else if (optionId === "pldCsv") {
                         // Export PLD as CSV
                         if (typeof pldMotion.exportAsCSV === "function") {

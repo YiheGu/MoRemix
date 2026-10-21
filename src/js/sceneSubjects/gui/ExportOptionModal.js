@@ -51,11 +51,13 @@ export function createExportOptionModal({
 
   const optionsContainer = document.createElement("div");
   optionsContainer.style.display = "flex";
+  optionsContainer.style.flexWrap = "wrap";
   optionsContainer.style.gap = "16px";
   optionsContainer.style.justifyContent = "space-between";
 
   const options = [
     { id: "animation", label: "Animation File\n(.glb)" },
+    { id: "animationFbx", label: "Animation File\n(.fbx)" },
     { id: "pldCsv", label: "PLD File\n(.csv)" },
     { id: VIDEO_OPTION_ID, label: "Video\n(.webm)" },
   ];
@@ -76,7 +78,7 @@ export function createExportOptionModal({
     card.style.padding = "16px";
     card.style.cursor = "pointer";
     card.style.transition = "border 0.15s ease, box-shadow 0.15s ease";
-    card.style.flex = "1";
+    card.style.flex = "1 1 120px";
 
     const label = document.createElement("div");
     label.innerText = option.label;
@@ -108,6 +110,7 @@ export function createExportOptionModal({
   }
 
   function setSelectedOption(optionId) {
+    if (isBusy) return;
     if (selectedOptionId && optionCards[selectedOptionId]) {
       optionCards[selectedOptionId].setSelected(false);
     }
@@ -540,7 +543,7 @@ export function createExportOptionModal({
 
     actionButton.disabled = true;
     actionButton.style.opacity = "0.65";
-    setBusyState(selectedOptionId === VIDEO_OPTION_ID);
+    setBusyState(true);
     feedback.innerText = "";
 
     const payload = {

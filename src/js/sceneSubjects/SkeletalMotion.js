@@ -5,7 +5,7 @@ import { getBoneInfo } from './functions/getBoneInfo';
 import { setBoneMPAmp } from './functions/setBoneMPAmp';
 import { generateBoneClip, updateBoneDiagnosticPlots } from './functions/generateBoneClip';
 import { setPhaseShift } from './functions/setPhaseShift';
-import { exportSkeletalAnimationGlbBlob } from './functions/exportAnimationModelOnly';
+import { downloadAnimationBlob, exportSkeletalAnimationBlob } from './functions/exportSkeletalAnimation';
 import { loopAnimationClipToDurationAsync } from './functions/loopAnimationClipToDuration';
 import { yieldToMainThread } from './functions/yieldToMainThread';
 import { estimateBoneFrequency } from './functions/estimateBoneFrequency';
@@ -207,6 +207,8 @@ export class SkeletalMotion{
 
     _finalizeLoad(model, animations) {
         this.model = model;
+        model.updateMatrix();
+        model.userData.animationExportRootMatrix = model.matrix.toArray();
         this.setMeshOpacity(this.meshOpacity);
         const sourceClip = animations[0] || null;
         const { AllBoneInfo, BoneInfo, clipRepeat } = this.inferSkeletonInfo(this.model, sourceClip);
@@ -513,29 +515,19 @@ export class SkeletalMotion{
 
     // ============= EXPORT =============
     exportGLBBlob() {
-        if (!this.model) {
-            return Promise.reject(new Error("No human model to export."));
-        }
-        return exportSkeletalAnimationGlbBlob(this.model, this.currentClip);
+        return this.exportAnimationBlob('glb');
+    }
+
+    exportAnimationBlob(format = 'glb') {
+        return exportSkeletalAnimationBlob(this.model, this.currentClip, format);
+    }
+
+    async exportAnimation(format = 'glb') {
+        const blob = await this.exportAnimationBlob(format);
+        downloadAnimationBlob(blob, `HumanWithEditedAnim.${format}`);
     }
 
     exportGLTF() {
-        if (!this.model) {
-        console.warn("No human model to export.");
-        return;
-        }
-        this.exportGLBBlob()
-            .then((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "HumanWithEditedAnim.glb";
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(url);
-                console.log("GLTF exported with current animation.");
-            })
-            .catch((err) => console.error("Error exporting GLTF:", err));
-    };
+        return this.exportAnimation('glb');
+    }
 }

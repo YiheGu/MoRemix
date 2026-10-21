@@ -1,10 +1,9 @@
 import * as THREE from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { SkeletalMotion } from '../sceneSubjects/SkeletalMotion';
 import { BasicScene } from '../sceneSubjects/BasicScene';
 import { createPlaybackController } from '../controlFlow/PlaybackController';
 import { showWorkspaceLoadingOverlay } from '../sceneSubjects/gui/WorkspaceLoadingOverlay';
-import { applyGlbReimportScaleCompensation, detachExcludedAnimationExportObjects } from '../sceneSubjects/functions/exportAnimationModelOnly';
+import { animationExportFilename, downloadAnimationBlob, exportSkeletalAnimationBlob } from '../sceneSubjects/functions/exportSkeletalAnimation';
 
 // Inject only the pane-c-playback styles (from WorkspaceLayout) needed by createPlaybackController
 const PLAYBACK_STYLE_ID = 'btui-playback-style';
@@ -93,46 +92,19 @@ function trimAnimationClip(sourceClip, startTime, endTime) {
     return new THREE.AnimationClip(sourceClip.name + '_trimmed', duration, newTracks);
 }
 
-async function exportClipAsGLB(model, clip, filename, dirHandle) {
-    const safeFilename = filename.endsWith('.glb') ? filename : filename + '.glb';
-    return new Promise((resolve, reject) => {
-        const exporter = new GLTFExporter();
-        const restoreExcludedObjects = detachExcludedAnimationExportObjects(model);
-        const restoreExportScale = applyGlbReimportScaleCompensation(model);
-        const restoreExportState = () => {
-            restoreExportScale();
-            restoreExcludedObjects();
-        };
-        try {
-            exporter.parse(model, async (result) => {
-                restoreExportState();
-                try {
-                    const blob = result instanceof ArrayBuffer
-                        ? new Blob([result], { type: 'model/gltf-binary' })
-                        : new Blob([JSON.stringify(result)], { type: 'application/json' });
-                    if (dirHandle) {
-                        const fh = await dirHandle.getFileHandle(safeFilename, { create: true });
-                        const w = await fh.createWritable();
-                        await w.write(blob);
-                        await w.close();
-                    } else {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url; a.download = safeFilename;
-                        document.body.appendChild(a); a.click(); a.remove();
-                        URL.revokeObjectURL(url);
-                    }
-                    resolve();
-                } catch (err) { reject(err); }
-            }, (err) => {
-                restoreExportState();
-                reject(err);
-            }, { binary: true, animations: clip ? [clip] : [] });
-        } catch (err) {
-            restoreExportState();
-            reject(err);
-        }
-    });
+export async function exportTrimmedAnimation(model, sourceClip, startTime, endTime, filename, dirHandle, format = 'glb') {
+    const clip = trimAnimationClip(sourceClip, startTime, endTime);
+    const safeFilename = animationExportFilename(filename, format);
+    const blob = await exportSkeletalAnimationBlob(model, clip, format);
+    if (dirHandle) {
+        const file = await dirHandle.getFileHandle(safeFilename, { create: true });
+        const writer = await file.createWritable();
+        await writer.write(blob);
+        await writer.close();
+    } else {
+        downloadAnimationBlob(blob, safeFilename);
+    }
+    return safeFilename;
 }
 
 // ---- Main export ----
@@ -148,6 +120,7 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
     let batchActive = false;
     let trimStart = 0;
     let trimEnd = 0;
+    let isExporting = false;
 
     // ---- Root overlay (full-screen workspace style) ----
     const overlay = document.createElement('div');
@@ -164,6 +137,7 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
     backBtn.type = 'button'; backBtn.innerText = '← Back to File List';
     workspaceBtn(backBtn);
     backBtn.addEventListener('click', () => {
+        if (isExporting) return;
         if (confirm('Return to file list? Unexported animations will not be saved.')) {
             destroy(); onBack?.();
         }
@@ -253,6 +227,19 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
         border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #fff; font-size: 13px;
         font-family: inherit;`);
     sidebar.appendChild(sidebarSection('Export Filename', fileNameInput));
+
+    const formatSelect = document.createElement('select');
+    formatSelect.setAttribute('aria-label', 'Animation export format');
+    ws(formatSelect, 'width: 100%; padding: 6px 8px; border-radius: 6px; background: #181d2c; color: #fff; border: 1px solid rgba(255,255,255,0.2);');
+    ['glb', 'fbx'].forEach(format => {
+        const option = document.createElement('option');
+        option.value = format;
+        option.innerText = format.toUpperCase();
+        formatSelect.appendChild(option);
+    });
+    formatSelect.value = getSharedState?.().animationExportFormat === 'fbx' ? 'fbx' : 'glb';
+    formatSelect.addEventListener('change', () => setSharedState?.({ animationExportFormat: formatSelect.value }));
+    sidebar.appendChild(sidebarSection('Export Format', formatSelect));
 
     // Navigation
     const prevBtn = document.createElement('button');
@@ -483,6 +470,7 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
     }
 
     async function loadFile(index) {
+        if (isExporting) return;
         if (index < 0 || index >= files.length) return;
         currentIndex = index;
         updateProgress();
@@ -522,25 +510,28 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
     }
 
     async function doExport(andNext) {
+        if (isExporting) return;
         const model = batchSkeletalMotion?.model;
         const sourceClip = batchSkeletalMotion?.sourceClip;
         if (!model || !sourceClip) { alert('No animation loaded.'); return; }
 
         const rawName = fileNameInput.value.trim() || 'trimmed';
-        const trimmedClip = trimAnimationClip(sourceClip, trimStart, trimEnd);
 
+        isExporting = true;
+        formatSelect.disabled = true;
         exportBtn.disabled = true; exportNextBtn.disabled = true;
         exportBtn.style.opacity = '0.45'; exportNextBtn.style.opacity = '0.45';
         try {
-            await exportClipAsGLB(model, trimmedClip, rawName, saveDirHandle);
+            const exportedName = await exportTrimmedAnimation(model, sourceClip, trimStart, trimEnd, rawName, saveDirHandle, formatSelect.value);
 
             if (records && records[currentIndex]) {
                 records[currentIndex].exported = true;
-                records[currentIndex].exportedName = rawName.endsWith('.glb') ? rawName : rawName + '.glb';
+                records[currentIndex].exportedName = exportedName;
                 records[currentIndex].trimmed = trimStart > 1e-3 || trimEnd < sourceClip.duration - 1e-3;
             }
             updateStatusBadges();
 
+            isExporting = false;
             if (andNext) {
                 if (currentIndex >= files.length - 1) { destroy(); onBack?.({ allDone: true }); return; }
                 await loadFile(currentIndex + 1);
@@ -549,6 +540,8 @@ export function createBatchTrimUI({ files, sceneManager, records, onBack, onOpen
             console.error('Export error:', err);
             alert(`Export failed: ${err?.message || err}`);
         } finally {
+            isExporting = false;
+            formatSelect.disabled = false;
             exportBtn.disabled = false; exportNextBtn.disabled = false;
             exportBtn.style.opacity = '1'; exportNextBtn.style.opacity = '1';
         }

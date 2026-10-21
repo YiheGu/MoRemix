@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "parcel src/index.html --no-cache",
     "build": "parcel build src/index.html --no-cache",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:animation-export": "node --test --test-isolation=none tests/animationExport.test.mjs"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
     "process": "^0.11.10"
   },
   "dependencies": {
+    "@comfyorg/fbx-exporter-three": "1.0.2",
     "dat.gui": "^0.7.9",
     "fft-js": "^0.0.12",
     "gh-pages": "^6.3.0",

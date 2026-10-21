@@ -98,9 +98,11 @@ Click **Export Settings**, select an output type, adjust any settings that appea
 
 > https://github.com/user-attachments/assets/c87b2e63-7ec8-4fd1-a0c6-ecf9f95fb6e4
 
-- **Animation File (.glb):** exports the edited skeletal animation for use in compatible 3D software.
+- **Animation File (.glb / .fbx):** exports the edited skeletal animation for use in compatible 3D software. FBX uses [@comfyorg/fbx-exporter-three](https://github.com/Comfy-Org/fbx-exporter-three).
 - **PLD File (.csv):** exports the edited PLD data or converts the edited skeletal animation into point-position data and exports it as CSV.
 - **Video (.webm):** records a preview. Choose **Pane A** for the skeletal view, **Pane B** for the corresponding PLD view, or **Pane A + Pane B** for both. Each selected camera angle produces a video.
+
+FBX export uses binary FBX with centimeter units, includes the model, skin, skeleton, and current animation, and samples animation curves at 60 Hz while retaining original key times. Textures are embedded when available; FBX material appearance may differ from GLB.
 
 > https://github.com/user-attachments/assets/a2d4ded5-8948-424f-a429-840d5895e918
 
@@ -117,7 +119,7 @@ This example imports 10 walking animations and uses **Batch Preprocessing** to i
 7. Edit **Export Filename** if needed, then click **Export** to save the current animation or **Export & Next** to save it and load the next file. Export each trim before switching files because unexported trim positions are reset when a file is loaded again.
 8. Use **Prev** and **Next** to switch between animations. Click **View Log** to check which files have been exported or trimmed. When finished, click **Back to File List**.
 
-Batch Preprocessing exports each result as an animated `.glb` file.
+In **Export Format**, choose **GLB** (default) or **FBX**; Batch Preprocessing exports the trimmed animation in that format.
 
 > https://github.com/user-attachments/assets/fc198567-f31c-4bf8-ac42-a47c982eb328
 
@@ -143,8 +145,8 @@ This example uses one waving animation from the [AMASS](https://amass.is.tue.mpg
 2. Wait for **Step 1 — File Check**. Expand the file entry if you want to inspect its bones, then click **Continue**. When generating from several files together, use files with the same skeleton and bone names so that every parameter row addresses the intended units.
 3. In **Step 2 — Generation Parameters**, click **Select bones**, select the bones to edit, choose **Frequency Ratio**, and enter the required ratio values as a comma-separated list. One parameter value is applied to every bone selected in that row.
 4. Click **Add Parameter Row** when several parameters should vary in the same generation job. **Cartesian Product** generates every combination across rows; **Synchronized Levels** pairs the first value in every row, then the second value in every row, and therefore requires equal-length value lists.
-5. In **Step 3 — Export Settings**, select **GLB ZIP** to generate editable animations or **Video ZIP** to generate `.webm` previews. For video, set the frame rate, resolution, scene appearance, repeat count, and one or more camera angles.
-6. Click **Generate GLB ZIP** or **Generate Video ZIP** and wait for the ZIP file to download.
+5. In **Step 3 — Export Settings**, select **GLB ZIP** or **FBX ZIP** to generate editable animations or **Video ZIP** to generate `.webm` previews. For video, set the frame rate, resolution, scene appearance, repeat count, and one or more camera angles.
+6. Click **Generate GLB ZIP**, **Generate FBX ZIP**, or **Generate Video ZIP** and wait for the ZIP file to download.
 
 > https://github.com/user-attachments/assets/8c015258-623f-4f8a-b7ae-7a4b712379df
 
@@ -169,4 +171,3 @@ Open the local address displayed in the terminal, then click **Enter MoRemix**.
 - **AMASS and BABEL.** These datasets are used as research examples and are not distributed as part of MoRemix. Their official licenses restrict copying and redistribution; users must register, obtain their own copies, follow the [AMASS license](https://amass.is.tue.mpg.de/license.html) and [BABEL license](https://babel.is.tue.mpg.de/license.html), and cite the corresponding publications.
 - **Xsens motion assets.** The demonstration source is credited to the [Xsens free motion-capture animation assets](https://www.xsens.com/entertainment/free-xsens-motion-capture-animation-assets). Xsens-derived FBX files and converted copies are not covered by the MoRemix code license and remain subject to the terms presented by Xsens when the assets are downloaded. 
 - **Unreal Engine and MetaHuman.** MetaHuman characters, Unreal mannequin assets, and media rendered from them remain subject to Epic's [MetaHuman licensing terms](https://www.metahuman.com/license?lang=en-US) and the applicable Unreal Engine terms. Raw character or mannequin assets are not relicensed by MoRemix.
-

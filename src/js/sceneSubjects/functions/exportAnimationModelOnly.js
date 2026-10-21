@@ -88,8 +88,9 @@ function hasValidTextureImage(texture) {
     const image = texture?.image;
     if (!image) return false;
     if (image.data && Number.isFinite(image.width) && Number.isFinite(image.height)) return true;
-    if (image instanceof HTMLCanvasElement || image instanceof ImageBitmap) return true;
-    if (image instanceof HTMLImageElement) return image.complete && image.naturalWidth > 0 && image.naturalHeight > 0;
+    if ((typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement)
+        || (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap)) return true;
+    if (typeof HTMLImageElement !== 'undefined' && image instanceof HTMLImageElement) return image.complete && image.naturalWidth > 0 && image.naturalHeight > 0;
     return false;
 }
 
@@ -121,7 +122,8 @@ function waitForImageElement(image) {
     });
 }
 
-async function waitForPendingTextureImages(root, timeoutMs = 1200) {
+export async function waitForPendingTextureImages(root, timeoutMs = 1200) {
+    if (typeof HTMLImageElement === 'undefined') return;
     const waits = collectMaterialTextures(root)
         .map((texture) => texture?.image)
         .filter((image) => image instanceof HTMLImageElement && !image.complete)

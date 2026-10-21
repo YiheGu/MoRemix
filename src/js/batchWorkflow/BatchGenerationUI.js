@@ -435,7 +435,7 @@ export function createBatchGenerationUI({ files, onBack }) {
         addParamRow(rowsEl);
 
         function updateGenerateLabel() {
-            generateBtn.innerText = exportMode === 'video' ? 'Generate Video ZIP' : 'Generate GLB ZIP';
+            generateBtn.innerText = exportMode === 'video' ? 'Generate Video ZIP' : `Generate ${exportMode.toUpperCase()} ZIP`;
         }
 
         function createGenerationModePanel() {
@@ -527,6 +527,7 @@ export function createBatchGenerationUI({ files, onBack }) {
             const glbLabel = createRadioLabel('GLB ZIP', 'glb');
             const videoLabel = createRadioLabel('Video ZIP', 'video');
             modeRow.appendChild(glbLabel);
+            modeRow.appendChild(createRadioLabel('FBX ZIP', 'fbx'));
             modeRow.appendChild(videoLabel);
             panel.appendChild(modeRow);
 
@@ -1013,10 +1014,10 @@ export function createBatchGenerationUI({ files, onBack }) {
             await runVideoGeneration(combinations, settings);
             return;
         }
-        await runGlbGeneration(combinations, settings);
+        await runAnimationGeneration(combinations, settings, exportMode);
     }
 
-    async function runGlbGeneration(combinations, settings) {
+    async function runAnimationGeneration(combinations, settings, format = 'glb') {
         const zip = new JSZip();
         const loading = showWorkspaceLoadingOverlay(`Generating ${files.length * combinations.length} animations...`);
         let done = 0;
@@ -1033,8 +1034,8 @@ export function createBatchGenerationUI({ files, onBack }) {
 
                     for (const combo of combinations) {
                         await applyComboToMotion(motion, originalGenerationClip, combo);
-                        const blob = await motion.exportGLBBlob();
-                        folder.file(`${getFileBase(file.name)}__${getComboLabel(combo)}.glb`, blob);
+                        const blob = await motion.exportAnimationBlob(format);
+                        folder.file(`${getFileBase(file.name)}__${getComboLabel(combo)}.${format}`, blob);
                         done += 1;
                         loading.setMessage(`Generating animations... ${done} / ${total}`);
                         loading.setProgress((done / total) * 100);
